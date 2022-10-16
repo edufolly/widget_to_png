@@ -7,6 +7,24 @@ import 'package:flutter/widgets.dart';
 ///
 ///
 ///
+class WidgetImageRenderingException implements Exception {
+  final String tag;
+
+  ///
+  ///
+  ///
+  const WidgetImageRenderingException(this.tag);
+
+  ///
+  ///
+  ///
+  @override
+  String toString() => tag;
+}
+
+///
+///
+///
 class _InternalHolder<T> {
   final T? value;
 
@@ -31,9 +49,13 @@ class WidgetImageController<T> extends ValueNotifier<_InternalHolder<T>> {
   ///
   ///
   ///
-  Future<void> process(T value) async {
-    _process = true;
-    this.value = _InternalHolder(value);
+  bool process(T value) {
+    if (!_process) {
+      _process = true;
+      this.value = _InternalHolder(value);
+      return true;
+    }
+    return false;
   }
 }
 
@@ -76,7 +98,7 @@ class WidgetImageRenderer<T> extends StatelessWidget {
           _InternalHolder<T?> value,
           Widget? child,
         ) {
-          WidgetsBinding.instance.endOfFrame.then((value) => _endOfFrame());
+          WidgetsBinding.instance.endOfFrame.then((_) => _captureWidget());
           return builder(context, value.value, child);
         },
       ),
@@ -86,8 +108,10 @@ class WidgetImageRenderer<T> extends StatelessWidget {
   ///
   ///
   ///
-  Future<void> _endOfFrame() async {
+  Future<void> _captureWidget() async {
     if (controller._process) {
+      String errorTag = '';
+
       BuildContext? context = controller._globalKey.currentContext;
 
       if (context != null) {
@@ -102,10 +126,18 @@ class WidgetImageRenderer<T> extends StatelessWidget {
 
         if (byteData != null) {
           callback(byteData, controller.value.value);
+        } else {
+          errorTag = "no-byte-data";
         }
+      } else {
+        errorTag = "no-build-context";
       }
 
       controller._process = false;
+
+      if (errorTag.isNotEmpty) {
+        throw WidgetImageRenderingException(errorTag);
+      }
     }
   }
 }
