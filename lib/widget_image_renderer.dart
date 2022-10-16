@@ -72,56 +72,26 @@ class WidgetImageRenderer<T> extends StatefulWidget {
 ///
 class _WidgetImageRendererState<T> extends State<WidgetImageRenderer<T>> {
   final GlobalKey _globalKey = GlobalKey();
-  late _InternalHolder<T> value;
-
-  ///
-  ///
-  ///
-  @override
-  void initState() {
-    super.initState();
-    value = widget.controller.value;
-    widget.controller.addListener(_valueChanged);
-  }
-
-  ///
-  ///
-  ///
-  @override
-  void didUpdateWidget(WidgetImageRenderer<T> oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.controller != widget.controller) {
-      oldWidget.controller.removeListener(_valueChanged);
-      value = widget.controller.value;
-      widget.controller.addListener(_valueChanged);
-    }
-  }
-
-  ///
-  ///
-  ///
-  @override
-  void dispose() {
-    widget.controller.removeListener(_valueChanged);
-    super.dispose();
-  }
-
-  ///
-  ///
-  ///
-  void _valueChanged() {
-    setState(() => value = widget.controller.value);
-  }
 
   ///
   ///
   ///
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.endOfFrame.then((value) => _endOfFrame());
     return RepaintBoundary(
       key: _globalKey,
-      child: widget.builder(context, value.value, widget.child),
+      child: ValueListenableBuilder<_InternalHolder<T?>>(
+        valueListenable: widget.controller,
+        child: widget.child,
+        builder: (
+          BuildContext context,
+          _InternalHolder<T?> value,
+          Widget? child,
+        ) {
+          WidgetsBinding.instance.endOfFrame.then((value) => _endOfFrame());
+          return widget.builder(context, value.value, child);
+        },
+      ),
     );
   }
 
