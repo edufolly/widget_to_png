@@ -44,7 +44,7 @@ class WidgetImageController<T> extends ValueNotifier<_InternalHolder<T>> {
   ///
   ///
   ///
-  WidgetImageController({T? value}) : super(_InternalHolder(value));
+  WidgetImageController({T? value}) : super(_InternalHolder<T>(value));
 
   ///
   ///
@@ -52,7 +52,7 @@ class WidgetImageController<T> extends ValueNotifier<_InternalHolder<T>> {
   bool process(T value) {
     if (!_process) {
       _process = true;
-      this.value = _InternalHolder(value);
+      this.value = _InternalHolder<T>(value);
       return true;
     }
     return false;
@@ -80,8 +80,8 @@ class WidgetImageRenderer<T> extends StatelessWidget {
     this.child,
     this.pixelRatio,
     this.imageByteFormat = ui.ImageByteFormat.png,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   ///
   ///
@@ -115,22 +115,26 @@ class WidgetImageRenderer<T> extends StatelessWidget {
       BuildContext? context = controller._globalKey.currentContext;
 
       if (context != null) {
-        RenderRepaintBoundary boundary =
-            context.findRenderObject() as RenderRepaintBoundary;
+        RenderRepaintBoundary? boundary =
+            context.findRenderObject() as RenderRepaintBoundary?;
 
-        ui.Image image = await boundary.toImage(
-          pixelRatio: pixelRatio ?? MediaQuery.of(context).devicePixelRatio,
-        );
+        if (boundary != null) {
+          ui.Image image = await boundary.toImage(
+            pixelRatio: pixelRatio ?? MediaQuery.of(context).devicePixelRatio,
+          );
 
-        ByteData? byteData = await image.toByteData(format: imageByteFormat);
+          ByteData? byteData = await image.toByteData(format: imageByteFormat);
 
-        if (byteData != null) {
-          callback(byteData, controller.value.value);
+          if (byteData != null) {
+            callback(byteData, controller.value.value);
+          } else {
+            errorTag = 'null-byte-data';
+          }
         } else {
-          errorTag = "no-byte-data";
+          errorTag = 'null-render-repaint-boundary';
         }
       } else {
-        errorTag = "no-build-context";
+        errorTag = 'null-build-context';
       }
 
       controller._process = false;

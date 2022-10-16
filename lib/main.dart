@@ -73,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
             child: Column(
-              children: [
+              children: <Widget>[
                 InputDecorator(
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
@@ -87,7 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       return Card(
                         color: Colors.deepOrange,
                         child: Padding(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(16),
                           child: Text(value ?? ''),
                         ),
                       );
@@ -97,10 +97,12 @@ class _MyHomePageState extends State<MyHomePage> {
                     callback: (ByteData data, String? value) {
                       DateTime now = DateTime.now();
 
-                      File file = File('test_${now.millisecond}.png');
-
-                      file.writeAsBytesSync(data.buffer
-                          .asUint8List(data.offsetInBytes, data.lengthInBytes));
+                      File('test_${now.millisecond}.png').writeAsBytesSync(
+                        data.buffer.asUint8List(
+                          data.offsetInBytes,
+                          data.lengthInBytes,
+                        ),
+                      );
                     },
                   ),
                 ),
