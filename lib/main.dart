@@ -94,7 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
 
                     /// Callback with image bytes.
-                    callback: (ByteData data) {
+                    callback: (ByteData data, String? value) {
                       DateTime now = DateTime.now();
 
                       File file = File('test_${now.millisecond}.png');

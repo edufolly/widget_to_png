@@ -20,6 +20,7 @@ class _InternalHolder<T> {
 ///
 ///
 class WidgetImageController<T> extends ValueNotifier<_InternalHolder<T>> {
+  final GlobalKey _globalKey = GlobalKey();
   bool _process = false;
 
   ///
@@ -39,10 +40,10 @@ class WidgetImageController<T> extends ValueNotifier<_InternalHolder<T>> {
 ///
 ///
 ///
-class WidgetImageRenderer<T> extends StatefulWidget {
+class WidgetImageRenderer<T> extends StatelessWidget {
   final WidgetImageController<T> controller;
   final Widget Function(BuildContext context, T? value, Widget? child) builder;
-  final void Function(ByteData data) callback;
+  final void Function(ByteData data, T? value) callback;
   final Widget? child;
   final double? pixelRatio;
   final ui.ImageByteFormat imageByteFormat;
@@ -64,32 +65,19 @@ class WidgetImageRenderer<T> extends StatefulWidget {
   ///
   ///
   @override
-  State<WidgetImageRenderer> createState() => _WidgetImageRendererState<T>();
-}
-
-///
-///
-///
-class _WidgetImageRendererState<T> extends State<WidgetImageRenderer<T>> {
-  final GlobalKey _globalKey = GlobalKey();
-
-  ///
-  ///
-  ///
-  @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
-      key: _globalKey,
+      key: controller._globalKey,
       child: ValueListenableBuilder<_InternalHolder<T?>>(
-        valueListenable: widget.controller,
-        child: widget.child,
+        valueListenable: controller,
+        child: child,
         builder: (
           BuildContext context,
           _InternalHolder<T?> value,
           Widget? child,
         ) {
           WidgetsBinding.instance.endOfFrame.then((value) => _endOfFrame());
-          return widget.builder(context, value.value, child);
+          return builder(context, value.value, child);
         },
       ),
     );
@@ -99,27 +87,25 @@ class _WidgetImageRendererState<T> extends State<WidgetImageRenderer<T>> {
   ///
   ///
   Future<void> _endOfFrame() async {
-    if (widget.controller._process) {
-      BuildContext? context = _globalKey.currentContext;
+    if (controller._process) {
+      BuildContext? context = controller._globalKey.currentContext;
 
       if (context != null) {
         RenderRepaintBoundary boundary =
             context.findRenderObject() as RenderRepaintBoundary;
 
         ui.Image image = await boundary.toImage(
-          pixelRatio:
-              widget.pixelRatio ?? MediaQuery.of(context).devicePixelRatio,
+          pixelRatio: pixelRatio ?? MediaQuery.of(context).devicePixelRatio,
         );
 
-        ByteData? byteData =
-            await image.toByteData(format: widget.imageByteFormat);
+        ByteData? byteData = await image.toByteData(format: imageByteFormat);
 
         if (byteData != null) {
-          widget.callback(byteData);
+          callback(byteData, controller.value.value);
         }
       }
 
-      widget.controller._process = false;
+      controller._process = false;
     }
   }
 }
