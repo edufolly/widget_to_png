@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:widget_to_png/widget_image_renderer.dart';
 
@@ -89,6 +92,16 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                       );
                     },
+
+                    /// Callback with image bytes.
+                    callback: (ByteData data) {
+                      DateTime now = DateTime.now();
+
+                      File file = File('test_${now.millisecond}.png');
+
+                      file.writeAsBytesSync(data.buffer
+                          .asUint8List(data.offsetInBytes, data.lengthInBytes));
+                    },
                   ),
                 ),
 
@@ -98,7 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: ElevatedButton(
                     onPressed: () => _controller
                         .process('Test: ${DateTime.now().toIso8601String()}'),
-                    child: const Text('Save image'),
+                    child: const Text('SAVE IMAGE'),
                   ),
                 ),
               ],

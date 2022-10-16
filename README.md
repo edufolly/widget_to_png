@@ -1,16 +1,30 @@
 # widget_to_png
 
-A new Flutter project.
+Simple example:
 
-## Getting Started
+```dart
+WidgetImageRenderer<String>(
+  controller: _controller,
 
-This project is a starting point for a Flutter application.
+  /// Render widget
+  builder: (BuildContext context, String? value, _) {
+    return Card(
+      color: Colors.deepOrange,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text(value ?? ''),
+      ),
+    );
+  },
 
-A few resources to get you started if this is your first Flutter project:
+  /// Callback with image bytes.
+  callback: (ByteData data) {
+    DateTime now = DateTime.now();
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+    File file = File('test_${now.millisecond}.png');
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+    file.writeAsBytesSync(data.buffer
+        .asUint8List(data.offsetInBytes, data.lengthInBytes));
+  },
+)
+```

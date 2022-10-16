@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -32,7 +31,6 @@ class WidgetImageController<T> extends ValueNotifier<_InternalHolder<T>> {
   ///
   ///
   Future<void> process(T value) async {
-    print('Process');
     _process = true;
     this.value = _InternalHolder(value);
   }
@@ -44,7 +42,10 @@ class WidgetImageController<T> extends ValueNotifier<_InternalHolder<T>> {
 class WidgetImageRenderer<T> extends StatefulWidget {
   final WidgetImageController<T> controller;
   final Widget Function(BuildContext context, T? value, Widget? child) builder;
+  final void Function(ByteData data) callback;
   final Widget? child;
+  final double? pixelRatio;
+  final ui.ImageByteFormat imageByteFormat;
 
   ///
   ///
@@ -52,7 +53,10 @@ class WidgetImageRenderer<T> extends StatefulWidget {
   const WidgetImageRenderer({
     required this.controller,
     required this.builder,
+    required this.callback,
     this.child,
+    this.pixelRatio,
+    this.imageByteFormat = ui.ImageByteFormat.png,
     Key? key,
   }) : super(key: key);
 
@@ -106,9 +110,7 @@ class _WidgetImageRendererState<T> extends State<WidgetImageRenderer<T>> {
   ///
   ///
   void _valueChanged() {
-    setState(() {
-      value = widget.controller.value;
-    });
+    setState(() => value = widget.controller.value);
   }
 
   ///
@@ -116,7 +118,6 @@ class _WidgetImageRendererState<T> extends State<WidgetImageRenderer<T>> {
   ///
   @override
   Widget build(BuildContext context) {
-    print('Build');
     WidgetsBinding.instance.endOfFrame.then((value) => _endOfFrame());
     return RepaintBoundary(
       key: _globalKey,
@@ -128,13 +129,7 @@ class _WidgetImageRendererState<T> extends State<WidgetImageRenderer<T>> {
   ///
   ///
   Future<void> _endOfFrame() async {
-    print('End of Frame!');
-
     if (widget.controller._process) {
-      print('Save');
-
-      DateTime now = DateTime.now();
-
       BuildContext? context = _globalKey.currentContext;
 
       if (context != null) {
@@ -142,17 +137,15 @@ class _WidgetImageRendererState<T> extends State<WidgetImageRenderer<T>> {
             context.findRenderObject() as RenderRepaintBoundary;
 
         ui.Image image = await boundary.toImage(
-          pixelRatio: MediaQuery.of(context).devicePixelRatio,
+          pixelRatio:
+              widget.pixelRatio ?? MediaQuery.of(context).devicePixelRatio,
         );
 
         ByteData? byteData =
-            await image.toByteData(format: ui.ImageByteFormat.png);
+            await image.toByteData(format: widget.imageByteFormat);
 
         if (byteData != null) {
-          File file = File('test_${now.millisecond}.png');
-
-          file.writeAsBytesSync(byteData.buffer
-              .asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+          widget.callback(byteData);
         }
       }
 
